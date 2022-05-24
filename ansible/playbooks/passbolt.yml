@@ -1,0 +1,6 @@
+---
+- hosts: passbolt
+  roles:
+    - passbolt
+  remote_user: root
+

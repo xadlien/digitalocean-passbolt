@@ -1,0 +1,55 @@
+---
+- name: install docker
+  apt:
+    name: 
+    - docker.io
+    - docker-compose
+    state: latest
+    update_cache : true 
+  tags:
+  - passbolt
+
+- name: template docker-compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: /root/docker-compose.yml
+  tags:
+  - passbolt
+
+- name: run compose file
+  command: docker-compose up -d
+  args:
+    chdir: /root/
+  tags:
+  - passbolt
+
+- name: wait 20 seconds for sql to start
+  command: sleep 20
+  tags:
+  - passbolt
+
+- name: create first user
+  command: docker-compose exec passbolt su -m -c "/usr/share/php/passbolt/bin/cake passbolt register_user -u {{ user_email }} -f {{ user_fname }} -l {{ user_lname }} -r admin" -s /bin/sh www-data
+  register: first_user_output
+  args:
+    chdir: /root/
+  tags:
+  - passbolt
+
+- name: pull ssl cert out of container
+  command: docker cp root_passbolt_1:/etc/ssl/certs/certificate.crt /tmp/certificate.crt
+  tags:
+  - passbolt
+
+- name: pull ssl cert to local desktop for distribution
+  fetch:
+    src: /tmp/certificate.crt
+    dest: ~/Desktop/passbolt.crt
+  tags:
+  - passbolt
+
+- name: output admin join url
+  debug: 
+    msg: "{{ first_user_output }}"
+  tags:
+  - passbolt
