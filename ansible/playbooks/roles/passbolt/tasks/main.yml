@@ -1,4 +1,15 @@
 ---
+- name: generate certs
+  shell: |
+    openssl req -x509 \
+    -newkey rsa:4096 \
+    -days 120 \
+    -subj "/C=LU/ST=Luxembourg/L=Esch-Sur-Alzette/O=Passbolt SA/OU=Passbolt IT Team/CN=passbolt.domain.tld/" \
+    -nodes \
+    -addext "subjectAltName = IP:{{inventory_hostname}}" \
+    -keyout /root/certificate.key \
+    -out /root/certificate.crt
+
 - name: install docker
   apt:
     name: 
@@ -43,7 +54,7 @@
 
 - name: pull ssl cert to local desktop for distribution
   fetch:
-    src: /tmp/certificate.crt
+    src: /root/certificate.crt
     dest: ~/Desktop/passbolt.crt
   tags:
   - passbolt
